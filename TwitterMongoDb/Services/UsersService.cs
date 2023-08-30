@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using TwitterMongoDb.Models;
+using Microsoft.Extensions.Configuration;
+using MongoDB.Driver.Core.Configuration;
 
 namespace TwitterMongoDb.Services
 {
@@ -11,14 +13,18 @@ namespace TwitterMongoDb.Services
         public UsersService(
             IOptions<UsersStoreDatabaseSettings> userStoreDatabaseSettings)
         {
+            var config = new ConfigurationBuilder()
+                .AddUserSecrets<Program>()
+                .Build();
+
             var mongoClient = new MongoClient(
-                userStoreDatabaseSettings.Value.ConnectionString);
+                config["ConnectionString"]);
 
             var mongoDatabase = mongoClient.GetDatabase(
-                userStoreDatabaseSettings.Value.DatabaseName);
+                config["DatabaseName"]);
 
             _booksCollection = mongoDatabase.GetCollection<User>(
-                userStoreDatabaseSettings.Value.UsersCollectionName);
+                config["UsersCollectionName"]);
         }
 
         public async Task<List<User>> GetAsync() =>
