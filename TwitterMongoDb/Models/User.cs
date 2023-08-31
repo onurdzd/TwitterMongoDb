@@ -1,9 +1,10 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
+using Microsoft.AspNetCore.Identity;
 
 namespace TwitterMongoDb.Models
 {
-    public class User
+    public class User 
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -20,6 +21,8 @@ namespace TwitterMongoDb.Models
         public string likes { get; set; }
         [BsonElement("retweets")]
         public string retweets { get; set; }
+        [BsonElement("role")]
+        public string role { get; set; }
 
     }
 }

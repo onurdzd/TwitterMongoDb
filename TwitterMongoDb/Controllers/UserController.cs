@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Amazon.Runtime;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
+using System.Security.Claims;
 using TwitterMongoDb.Models;
 using TwitterMongoDb.Services;
 
@@ -6,9 +10,11 @@ namespace TwitterMongoDb.Controllers
 
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/user")]
     public class UserController : ControllerBase
     {
+      
+
         private readonly UsersService _usersService;
 
         public UserController(UsersService usersService) =>
@@ -27,22 +33,64 @@ namespace TwitterMongoDb.Controllers
             {
                 return NotFound();
             }
-
             return user;
         }
 
         [HttpPost]
         public async Task<IActionResult> Post(User newUser)
         {
-            var newUsername=await _usersService.GetAsyncUsername(newUser.username);
-            if(newUsername is null) {
+            var existUser=await _usersService.GetAsyncUsername(newUser.username);
+            if(existUser is null) {
                 await _usersService.CreateAsync(newUser);
                 return CreatedAtAction(nameof(Get), new { id = newUser.Id }, newUser);
             }
             else
             {
-                return BadRequest("Username geçersiz");
+                return Unauthorized("Username geçersiz");
             }
+        }
+      
+        [HttpPost("login")]
+        public async Task<IActionResult> PostLogin(UserLogin user)
+        {
+            
+       
+            var existUser = await _usersService.GetAsyncUsername(user.username);
+            if (existUser==null)
+            {
+                return Unauthorized("Username geçersiz");
+            }
+            else
+            {
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(user.password, existUser.password);
+                if (isPasswordValid)
+                {
+                    var config = new ConfigurationBuilder()
+                        .AddUserSecrets<Program>()
+                        .Build();
+
+                    var secretKey = config["secretKey"]; // Özel anahtarınızı buraya ekleyin
+                    var expirationMinutes = 6000; // Token süresini dakika cinsinden buraya ekleyin
+
+                    var claims = new[]
+                    {
+                        new Claim(ClaimTypes.Name, user.username), // Kullanıcı adını buraya ekleyin
+                        new Claim(ClaimTypes.Role, existUser.role), // Kullanıcının rolünü buraya ekleyin
+                    };
+                    GenerateToken token1=new GenerateToken();
+                    var token = token1.GenerateJwtToken(secretKey,expirationMinutes, claims);
+                    Response.Cookies.Append("jwtToken", token, new CookieOptions
+                    {
+                        HttpOnly = true, // Tarayıcı tarafından erişilemez
+                        SameSite = SameSiteMode.Strict, // Güvenlik açısından daha katı
+                        Expires = DateTime.UtcNow.AddMinutes(expirationMinutes), // Çerez süresi
+                                                                                 // Diğer çerez seçenekleri
+                    });
+                    return Ok("Giriş başarılı!");
+                }
+            }
+            
+            return Unauthorized("Giriş başarısız!");
         }
 
         [HttpPut("{id:length(24)}")]
@@ -74,7 +122,7 @@ namespace TwitterMongoDb.Controllers
 
             await _usersService.RemoveAsync(id);
 
-            return NoContent();
+            return Ok(id +" nolu user silindi!");
         }
     }
 }
