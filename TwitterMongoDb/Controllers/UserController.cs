@@ -34,9 +34,15 @@ namespace TwitterMongoDb.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(User newUser)
         {
-            await _usersService.CreateAsync(newUser);
-
-            return CreatedAtAction(nameof(Get), new { id = newUser.Id }, newUser);
+            var newUsername=await _usersService.GetAsyncUsername(newUser.username);
+            if(newUsername is null) {
+                await _usersService.CreateAsync(newUser);
+                return CreatedAtAction(nameof(Get), new { id = newUser.Id }, newUser);
+            }
+            else
+            {
+                return BadRequest("Username geçersiz");
+            }
         }
 
         [HttpPut("{id:length(24)}")]

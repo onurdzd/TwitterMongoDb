@@ -33,6 +33,9 @@ namespace TwitterMongoDb.Services
         public async Task<User?> GetAsync(string id) =>
             await _usersCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
+        public async Task<User?> GetAsyncUsername(string username) =>
+           await _usersCollection.Find(x => x.username.Equals(username)).FirstOrDefaultAsync();
+
         public async Task CreateAsync(User newUser) =>
             await _usersCollection.InsertOneAsync(newUser);
 
