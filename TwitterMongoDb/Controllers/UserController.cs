@@ -1,8 +1,11 @@
 ﻿using Amazon.Runtime;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using TwitterMongoDb.Models;
 using TwitterMongoDb.Services;
 
@@ -13,7 +16,7 @@ namespace TwitterMongoDb.Controllers
     [Route("api/user")]
     public class UserController : ControllerBase
     {
-      
+      //jwt token sanırım oluşturdu.ancak front end den buraya jwt nasıl gönderişlir her seferinde yeniden token checkmi yapılacak çözemedim..
 
         private readonly UsersService _usersService;
 
@@ -70,23 +73,37 @@ namespace TwitterMongoDb.Controllers
                         .Build();
 
                     var secretKey = config["secretKey"]; // Özel anahtarınızı buraya ekleyin
-                    var expirationMinutes = 6000; // Token süresini dakika cinsinden buraya ekleyin
+                    var tokenExpiration = DateTime.UtcNow.AddHours(24); // Örnek olarak 1 saatlik bir süre ekleyin
+                    var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.Name, user.username),
+                            // Diğer isteğe bağlı iddia bilgilerini ekleyin
+                            new Claim(ClaimTypes.Role, existUser.role),
 
-                    var claims = new[]
+                        };
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var key = Encoding.ASCII.GetBytes(secretKey); // Tokeni şifrelemek için kullanılan gizli anahtar
+                    var tokenDescriptor = new SecurityTokenDescriptor
                     {
-                        new Claim(ClaimTypes.Name, user.username), // Kullanıcı adını buraya ekleyin
-                        new Claim(ClaimTypes.Role, existUser.role), // Kullanıcının rolünü buraya ekleyin
+                        Subject = new ClaimsIdentity(claims),
+                        Expires = tokenExpiration,
+                        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                     };
-                    GenerateToken token1=new GenerateToken();
-                    var token = token1.GenerateJwtToken(secretKey,expirationMinutes, claims);
-                    Response.Cookies.Append("jwtToken", token, new CookieOptions
+                    var securityToken = tokenHandler.CreateToken(tokenDescriptor);
+                    var tokenString = tokenHandler.WriteToken(securityToken);
+
+                    // JWT tokenini bir HTTP Cookie olarak ekleyin
+                    Response.Cookies.Append("jwtToken", tokenString, new CookieOptions
                     {
-                        HttpOnly = true, // Tarayıcı tarafından erişilemez
-                        SameSite = SameSiteMode.Strict, // Güvenlik açısından daha katı
-                        Expires = DateTime.UtcNow.AddMinutes(expirationMinutes), // Çerez süresi
-                                                                                 // Diğer çerez seçenekleri
+                        HttpOnly = true,
+                        Expires = tokenExpiration,
+                        Secure = true,
+                        SameSite = SameSiteMode.None,
+                        // Diğer gerekli cookie seçeneklerini ayarlayın
                     });
-                    return Ok("Giriş başarılı!");
+
+
+                    return Ok(new { token = tokenString, message = "Giriş başarılı!" });
                 }
             }
             
