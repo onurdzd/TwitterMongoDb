@@ -1,14 +1,13 @@
-﻿using Amazon.Runtime;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using MongoDB.Driver;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using TwitterMongoDb.Models;
+using TwitterMongoDb.Models.Authentication;
 using TwitterMongoDb.Services;
-
+//authentication program.cs içerisine yazıldı ancak postman da bir türlü authenticate olunamadı.ya postmanda token doğru yere yazılmıyor yada server side authentication problemi var
 namespace TwitterMongoDb.Controllers
 
 {
@@ -16,7 +15,6 @@ namespace TwitterMongoDb.Controllers
     [Route("api/user")]
     public class UserController : ControllerBase
     {
-      //jwt token sanırım oluşturdu.ancak front end den buraya jwt nasıl gönderişlir her seferinde yeniden token checkmi yapılacak çözemedim..
 
         private readonly UsersService _usersService;
 
@@ -24,13 +22,15 @@ namespace TwitterMongoDb.Controllers
             _usersService = usersService;
 
         [HttpGet]
+        //[Authorize]
         public async Task<List<User>> Get() =>
-            await _usersService.GetAsync();
+            await _usersService.GetUsersAsync();
 
         [HttpGet("{id:length(24)}")]
+        //[Authorize]
         public async Task<ActionResult<User>> Get(string id)
         {
-            var user = await _usersService.GetAsync(id);
+            var user = await _usersService.GetUserAsync(id);
 
             if (user is null)
             {
@@ -44,8 +44,8 @@ namespace TwitterMongoDb.Controllers
         {
             var existUser=await _usersService.GetAsyncUsername(newUser.username);
             if(existUser is null) {
-                await _usersService.CreateAsync(newUser);
-                return CreatedAtAction(nameof(Get), new { id = newUser.Id }, newUser);
+                await _usersService.CreateUserAsync(newUser);
+                return CreatedAtAction(nameof(Get), new { id = newUser.userId }, newUser);
             }
             else
             {
@@ -56,8 +56,6 @@ namespace TwitterMongoDb.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> PostLogin(UserLogin user)
         {
-            
-       
             var existUser = await _usersService.GetAsyncUsername(user.username);
             if (existUser==null)
             {
@@ -74,25 +72,16 @@ namespace TwitterMongoDb.Controllers
 
                     var secretKey = config["secretKey"]; // Özel anahtarınızı buraya ekleyin
                     var tokenExpiration = DateTime.UtcNow.AddHours(24); // Örnek olarak 1 saatlik bir süre ekleyin
-                    var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.Name, user.username),
-                            // Diğer isteğe bağlı iddia bilgilerini ekleyin
-                            new Claim(ClaimTypes.Role, existUser.role),
-
-                        };
-                    var tokenHandler = new JwtSecurityTokenHandler();
-                    var key = Encoding.ASCII.GetBytes(secretKey); // Tokeni şifrelemek için kullanılan gizli anahtar
-                    var tokenDescriptor = new SecurityTokenDescriptor
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+                    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var claims = new[]
                     {
-                        Subject = new ClaimsIdentity(claims),
-                        Expires = tokenExpiration,
-                        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                       new Claim(ClaimTypes.Role, existUser.role),
                     };
-                    var securityToken = tokenHandler.CreateToken(tokenDescriptor);
-                    var tokenString = tokenHandler.WriteToken(securityToken);
+                    var token = new JwtSecurityToken(config["iss"], config["aud"], claims, expires: tokenExpiration, signingCredentials: creds);
+                    var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-                    // JWT tokenini bir HTTP Cookie olarak ekleyin
+                    //Cookie olarak eklenmek istenirse:
                     Response.Cookies.Append("jwtToken", tokenString, new CookieOptions
                     {
                         HttpOnly = true,
@@ -102,7 +91,6 @@ namespace TwitterMongoDb.Controllers
                         // Diğer gerekli cookie seçeneklerini ayarlayın
                     });
 
-
                     return Ok(new { token = tokenString, message = "Giriş başarılı!" });
                 }
             }
@@ -111,33 +99,35 @@ namespace TwitterMongoDb.Controllers
         }
 
         [HttpPut("{id:length(24)}")]
+        //[Authorize]
         public async Task<IActionResult> Update(string id, User updatedUser)
         {
-            var user = await _usersService.GetAsync(id);
+            var user = await _usersService.GetUserAsync(id);
 
             if (user is null)
             {
                 return NotFound();
             }
 
-            updatedUser.Id = user.Id;
+            updatedUser.userId = user.userId;
 
-            await _usersService.UpdateAsync(id, updatedUser);
+            await _usersService.UpdateUserAsync(id, updatedUser);
 
             return NoContent();
         }
 
         [HttpDelete("{id:length(24)}")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(string id)
         {
-            var user = await _usersService.GetAsync(id);
+            var user = await _usersService.GetUserAsync(id);
 
             if (user is null)
             {
                 return NotFound();
             }
 
-            await _usersService.RemoveAsync(id);
+            await _usersService.RemoveUserAsync(id);
 
             return Ok(id +" nolu user silindi!");
         }

@@ -2,6 +2,7 @@
 using System.Text;
 using TwitterMongoDb.Models;
 using TwitterMongoDb.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<UsersStoreDatabaseSettings>(
     builder.Configuration.GetSection("UsersStoreDatabase"));
 builder.Services.AddSingleton<UsersService>();
+builder.Services.AddSingleton<TweetsService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -29,8 +31,24 @@ builder.Services.AddCors(options =>
 });
 
 // services.AddResponseCaching();  
-
+var config = new ConfigurationBuilder()
+                        .AddUserSecrets<Program>()
+                        .Build();
 builder.Services.AddControllers();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+       .AddJwtBearer(options =>
+       {
+           options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+           {
+               RequireExpirationTime = true,
+               ValidIssuer = config["iss"],
+               ValidateIssuer = true,
+               ValidateAudience = false,
+               ValidateLifetime = true,
+               ValidateIssuerSigningKey = true,
+               IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["secretKey"]))
+           };
+       });
 
 var app = builder.Build();
 app.UseHttpsRedirection();
@@ -47,7 +65,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

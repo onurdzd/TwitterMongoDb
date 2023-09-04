@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Driver.Core.Configuration;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using MongoDB.Bson;
 
 namespace TwitterMongoDb.Services
 {
@@ -27,19 +28,18 @@ namespace TwitterMongoDb.Services
 
             _usersCollection = mongoDatabase.GetCollection<User>(
                 config["UsersCollectionName"]);
-        
         }
 
-        public async Task<List<User>> GetAsync() =>
+        public async Task<List<User>> GetUsersAsync() =>
             await _usersCollection.Find(_ => true).ToListAsync();
 
-        public async Task<User?> GetAsync(string id) =>
-            await _usersCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+        public async Task<User?> GetUserAsync(string id) =>
+            await _usersCollection.Find(x => x.userId == id).FirstOrDefaultAsync();
 
         public async Task<User?> GetAsyncUsername(string username) =>
            await _usersCollection.Find(x => x.username.Equals(username)).FirstOrDefaultAsync();
 
-        public async Task CreateAsync(User newUser)
+        public async Task CreateUserAsync(User newUser)
         {
             // Kullanıcı şifresini bcrypt ile hashle
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(newUser.password);
@@ -51,11 +51,11 @@ namespace TwitterMongoDb.Services
             await _usersCollection.InsertOneAsync(newUser);
         }
 
-        public async Task UpdateAsync(string id, User updatedUser) =>
-            await _usersCollection.ReplaceOneAsync(x => x.Id == id, updatedUser);
+        public async Task UpdateUserAsync(string id, User updatedUser) =>
+            await _usersCollection.ReplaceOneAsync(x => x.userId == id, updatedUser);
 
-        public async Task RemoveAsync(string id) =>
-            await _usersCollection.DeleteOneAsync(x => x.Id == id);
+        public async Task RemoveUserAsync(string id) =>
+            await _usersCollection.DeleteOneAsync(x => x.userId == id);
 
     }
 }
