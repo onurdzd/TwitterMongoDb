@@ -36,6 +36,7 @@ namespace TwitterMongoDb.Services
 
         public async Task CreateTweetAsync(Tweet newTweet)
         {
+            newTweet.tweetCreatedAt = DateTime.Now;
             // Veritabanına yeni kullanıcıyı ekleyin
             await _tweetsCollection.InsertOneAsync(newTweet);
         }

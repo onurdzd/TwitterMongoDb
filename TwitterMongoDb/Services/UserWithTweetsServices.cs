@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using TwitterMongoDb.Models;
 
 namespace TwitterMongoDb.Services
 {
@@ -13,40 +14,52 @@ namespace TwitterMongoDb.Services
                 _mongoDatabase = mongoDatabase;
             }
 
-            public void CreateView()
+            public static List<UserWithTweet> CreateView(IMongoCollection<User> userCollection)
             {
             var pipeline = new BsonDocument[]
-            {
-                // İlk aşama: 'tweets' koleksiyonunu 'users' koleksiyonuyla birleştirme
-                new BsonDocument("$lookup",
-                    new BsonDocument
-                    {
-                        { "from", "users" },
-                        { "localField", "userId" }, // 'users' koleksiyonundaki alan
-                        { "foreignField", "userId" }, // 'tweets' koleksiyonundaki alan
-                        { "as", "userTweets" } // Birleştirilmiş koleksiyonun adı
-                    }
-                ),
-                // İkinci aşama: İstediğiniz alanları seçme
-                new BsonDocument("$project",
-                    new BsonDocument
-                    {
-                        { "_id", 0 }, // _id alanını hariç tut
-                        { "userId", 1 }, // userId alanını dahil et
-                        { "username", 1 }, // userName alanını dahil et
-                        { "userTweets.tweetText", 1 } // userTweets içindeki tweetText alanını dahil et
-                    }
-                )
-            };
+                 {
+                    // İlk aşama: User koleksiyonundan kullanıcıları al
+                    new BsonDocument("$lookup",
+                        new BsonDocument
+                        {
+                            { "from", "tweets" }, // tweets koleksiyonu
+                            { "localField", "_id" }, // User koleksiyonundaki userId
+                            { "foreignField", "userId" }, // Tweet koleksiyonundaki userId
+                            { "as", "userTweets" } // Sonucu userTweets alanına sakla
+                        }
+                    ),
+                    // İkinci aşama: User koleksiyonundaki alanları yeniden düzenle
+                    new BsonDocument("$project",
+                        new BsonDocument
+                        {
+                            { "userId", 1 },
+                            { "username", 1 },
+                            { "userTweets.tweetText", 1 } // userTweets içindeki tweetText alanını seç
+                        }
+                    ),
+                    //// Üçüncü aşama: userTweets alanını bir liste olarak düzenle
+                    new BsonDocument("$group",
+                        new BsonDocument
+                        {
+                            { "_id", "$userId" },
+                            { "username", new BsonDocument("$first", "$username") }, // username alanını koru
+                            { "userTweets", new BsonDocument("$push", "$userTweets.tweetText") } // userTweets içindeki tweetText alanlarını bir listeye ekle
+                        }
+                    ),
+                    //// Son aşama: UserWithTweet sınıfını oluştur
+                    new BsonDocument("$project",
+                        new BsonDocument
+                        {
+                            { "_id", 0 }, // _id alanını kaldır
+                            { "userId", "$_id" }, // _id alanını userId olarak değiştir
+                            { "username", 1 },
+                            { "userTweets", 1 }
+                        }
+                    )
+                 };
 
-            var command = new BsonDocument
-            {
-                { "create", "userWithTweetCollection" }, // Görünümün adı
-                { "viewOn", "users" }, // Hangi koleksiyon üstünde oluşturulacak
-                { "pipeline", new BsonArray(pipeline) } // Tanımlanan aggregation pipeline
-            };
-
-                _mongoDatabase.RunCommand<BsonDocument>(command);
-            }
+            var result = userCollection.Aggregate<UserWithTweet>(pipeline).ToList();
+            return result;
+        }
         }
 }

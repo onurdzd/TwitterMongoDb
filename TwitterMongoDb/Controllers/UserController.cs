@@ -19,7 +19,7 @@ namespace TwitterMongoDb.Controllers
 
         private readonly UsersService _usersService;
 
-        public UserController(UsersService usersService){
+        public UserController(UsersService usersService) {
             _usersService = usersService;
         }
 
@@ -27,7 +27,14 @@ namespace TwitterMongoDb.Controllers
         [HttpGet]
         //[Authorize]
         public async Task<List<User>> Get() =>
-            await _usersService.GetUsersAsync();
+        await _usersService.GetUsersAsync();
+
+        //aşağıdaki şekilde join sonucu döndürülüyor.ancak istediğim gibi tweetleri arraya çeviremedi.boş dönüyor
+        //[HttpGet]
+        //public List<UserWithTweet> Get()
+        //{
+        //    return UserWithTweetsServices.CreateView(_usersService.mongoCollection);
+        //}
 
         [HttpGet("{id:length(24)}")]
         //[Authorize]

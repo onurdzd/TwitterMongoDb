@@ -3,6 +3,7 @@ using System.Text;
 using TwitterMongoDb.Models;
 using TwitterMongoDb.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 

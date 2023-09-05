@@ -14,5 +14,7 @@ namespace TwitterMongoDb.Models
 
         [BsonElement("tweetText")]
         public string tweetText { get; set; }
+        [BsonRepresentation(BsonType.DateTime)]
+        public DateTime tweetCreatedAt { get; set; }
     }
 }

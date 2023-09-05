@@ -30,8 +30,8 @@ namespace TwitterMongoDb.Services
                 config["UsersCollectionName"]);
 
             //aşağıdaki join ile yeni tablo oluşturuyor fakat username hariç boş geliyor.ayrıca user da sorgu yapınca çalışıyor bunu direk çalıştırabilirmisin
-            //UserWithTweetsServices userWithTweetsServices = new UserWithTweetsServices(mongoDatabase);
-            //userWithTweetsServices.CreateView();
+            //UserWithTweetsServices.CreateView(_usersCollection);
+
         }
 
         public async Task<List<User>> GetUsersAsync() =>
@@ -50,6 +50,7 @@ namespace TwitterMongoDb.Services
 
             // Yeni kullanıcının şifresini güncelle
             newUser.password = hashedPassword;
+            newUser.userCreatedAt = DateTime.Now;
 
             // Veritabanına yeni kullanıcıyı ekleyin
             await _usersCollection.InsertOneAsync(newUser);
@@ -61,5 +62,6 @@ namespace TwitterMongoDb.Services
         public async Task RemoveUserAsync(string id) =>
             await _usersCollection.DeleteOneAsync(x => x.userId == id);
 
+        public IMongoCollection<User> mongoCollection => _usersCollection;
     }
 }
