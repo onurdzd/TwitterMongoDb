@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Driver;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -18,8 +19,10 @@ namespace TwitterMongoDb.Controllers
 
         private readonly UsersService _usersService;
 
-        public UserController(UsersService usersService) =>
+        public UserController(UsersService usersService){
             _usersService = usersService;
+        }
+
 
         [HttpGet]
         //[Authorize]
@@ -36,6 +39,7 @@ namespace TwitterMongoDb.Controllers
             {
                 return NotFound();
             }
+
             return user;
         }
 
@@ -91,7 +95,7 @@ namespace TwitterMongoDb.Controllers
                         // Diğer gerekli cookie seçeneklerini ayarlayın
                     });
 
-                    return Ok(new { token = tokenString, message = "Giriş başarılı!" });
+                    return Ok(new { token = tokenString,id=existUser.userId, message = "Giriş başarılı!" });
                 }
             }
             

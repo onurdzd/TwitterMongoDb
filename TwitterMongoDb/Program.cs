@@ -35,6 +35,7 @@ var config = new ConfigurationBuilder()
                         .AddUserSecrets<Program>()
                         .Build();
 builder.Services.AddControllers();
+//authenticatior çalışmıyor
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        .AddJwtBearer(options =>
        {

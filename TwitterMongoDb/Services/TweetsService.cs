@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using TwitterMongoDb.Models;
 
@@ -23,7 +24,9 @@ namespace TwitterMongoDb.Services
 
             _tweetsCollection = mongoDatabase.GetCollection<Tweet>(
                 config["TweetsCollectionName"]);
+                     
         }
+
 
         public async Task<List<Tweet>> GetTweetsAsync() =>
             await _tweetsCollection.Find(_ => true).ToListAsync();
