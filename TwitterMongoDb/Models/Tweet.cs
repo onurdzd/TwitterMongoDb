@@ -11,6 +11,8 @@ namespace TwitterMongoDb.Models
 
         [BsonElement("userId")]
         public string userId { get; set; }
+        [BsonElement("username")]
+        public string tweetUsername { get; set; }
 
         [BsonElement("tweetText")]
         public string tweetText { get; set; }

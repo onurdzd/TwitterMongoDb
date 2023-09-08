@@ -19,8 +19,22 @@ namespace TwitterMongoDb.Controllers
 
         [HttpGet]
         //[Authorize]
-        public async Task<List<Tweet>> Get() =>
-            await _tweetsService.GetTweetsAsync();
+        public async Task<List<Tweet>> Get()
+        {
+            var tweets = await _tweetsService.GetTweetsAsync();
+            var users = await _usersService.GetUsersAsync();
+
+            tweets.ForEach(tweet =>
+            {
+                var user = users.Find(item => item.userId == tweet.userId);
+                if (user != null)
+                {
+                    tweet.tweetUsername = user.username; // Varsayılan olarak username dizesini alın
+                }
+            });
+
+            return tweets;
+        }
 
         [HttpGet("{id:length(24)}")]
         //[Authorize]
