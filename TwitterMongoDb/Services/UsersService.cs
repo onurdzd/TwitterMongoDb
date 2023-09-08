@@ -28,10 +28,6 @@ namespace TwitterMongoDb.Services
 
             _usersCollection = mongoDatabase.GetCollection<User>(
                 config["UsersCollectionName"]);
-
-            //aşağıdaki join ile yeni tablo oluşturuyor fakat username hariç boş geliyor.ayrıca user da sorgu yapınca çalışıyor bunu direk çalıştırabilirmisin
-            //UserWithTweetsServices.CreateView(_usersCollection);
-
         }
 
         public async Task<List<User>> GetUsersAsync() =>

@@ -8,6 +8,7 @@ namespace TwitterMongoDb.Services
     public class TweetsService
     {
         private readonly IMongoCollection<Tweet> _tweetsCollection;
+        private readonly IMongoCollection<User> _usersCollection;
 
         public TweetsService(
             IOptions<UsersStoreDatabaseSettings> userStoreDatabaseSettings)
@@ -24,7 +25,8 @@ namespace TwitterMongoDb.Services
 
             _tweetsCollection = mongoDatabase.GetCollection<Tweet>(
                 config["TweetsCollectionName"]);
-                     
+            _usersCollection = mongoDatabase.GetCollection<User>(
+                config["UsersCollectionName"]); ;
         }
 
 
@@ -47,7 +49,12 @@ namespace TwitterMongoDb.Services
         public async Task RemoveTweetAsync(string id) =>
             await _tweetsCollection.DeleteOneAsync(x => x.tweetId == id);
 
+        //public async Task<List<UserWithTweets>> GetUserTweets()
+        //{
+           //Burası eksik tamamlaman gerekiyor
+        //}
     }
-
 }
+
+
 
