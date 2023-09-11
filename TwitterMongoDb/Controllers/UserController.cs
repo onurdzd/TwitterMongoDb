@@ -29,13 +29,6 @@ namespace TwitterMongoDb.Controllers
         public async Task<List<User>> Get() =>
         await _usersService.GetUsersAsync();
 
-        //aşağıdaki şekilde join sonucu döndürülüyor.ancak istediğim gibi tweetleri arraya çeviremedi.boş dönüyor
-        //[HttpGet]
-        //public List<UserWithTweet> Get()
-        //{
-        //    return UserWithTweetsServices.CreateView(_usersService.mongoCollection);
-        //}
-
         [HttpGet("{id:length(24)}")]
         //[Authorize]
         public async Task<ActionResult<User>> Get(string id)

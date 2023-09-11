@@ -20,19 +20,34 @@ namespace TwitterMongoDb.Controllers
         [HttpGet]
         //[Authorize]
         public async Task<List<Tweet>> Get()
-            {
-                var tweets = await _tweetsService.GetTweetsAsync();
-                var users = await _usersService.GetUsersAsync();
+        {
+            var tweets = await _tweetsService.GetTweetsAsync();
+            var users = await _usersService.GetUsersAsync();
 
-                tweets.ForEach(tweet =>
+            tweets.ForEach(tweet =>
+            {
+                var user = users.Find(item => item.userId == tweet.userId);
+                if (user != null)
                 {
-                    var user = users.Find(item => item.userId == tweet.userId);
-                    if (user != null)
-                    {
-                        tweet.tweetUsername = user.username; // Varsayılan olarak username dizesini alın
-                    }
-                });
+                    tweet.tweetUsername = user.username; // Varsayılan olarak username dizesini alın
+                }
+            });
             return tweets;
+        }
+
+        [HttpGet("tweetsWithUser")]
+        //[Authorize]
+        public async Task<ActionResult<List<UserWithTweets>>> GetTweetsWithUser()
+        {
+            try
+            {
+                var tweets = await _tweetsService.GetUserTweets();
+                return Ok(tweets); // 200 OK yanıtı ile veriyi döndürün
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message); // 500 Internal Server Error ile hata yanıtı döndürün
+            }
         }
 
         [HttpGet("{id:length(24)}")]

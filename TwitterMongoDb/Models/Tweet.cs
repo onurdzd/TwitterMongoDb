@@ -7,6 +7,7 @@ namespace TwitterMongoDb.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
+        [BsonElement("tweetId")]
         public string? tweetId { get; set; }
 
         [BsonElement("userId")]

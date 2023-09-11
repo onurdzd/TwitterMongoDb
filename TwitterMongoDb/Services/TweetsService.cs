@@ -39,7 +39,6 @@ namespace TwitterMongoDb.Services
         public async Task CreateTweetAsync(Tweet newTweet)
         {
             newTweet.tweetCreatedAt = DateTime.Now;
-            // Veritabanına yeni kullanıcıyı ekleyin
             await _tweetsCollection.InsertOneAsync(newTweet);
         }
 
@@ -49,10 +48,32 @@ namespace TwitterMongoDb.Services
         public async Task RemoveTweetAsync(string id) =>
             await _tweetsCollection.DeleteOneAsync(x => x.tweetId == id);
 
-        //public async Task<List<UserWithTweets>> GetUserTweets()
-        //{
-           //Burası eksik tamamlaman gerekiyor
-        //}
+        public async Task<List<UserWithTweets>> GetUserTweets()
+        {
+            var pipeline = new[]
+            {
+                // İkinci aşama: Users ve Tweets koleksiyonlarını birleştir
+                 new BsonDocument("$lookup", new BsonDocument
+                    {
+                        { "from", "tweets" },
+                        { "localField", "username" },
+                        { "foreignField", "tweetUsername" },
+                        { "as", "userTweets" }
+                    }),
+                new BsonDocument("$project", new BsonDocument
+                    {
+                           { "_id", 0 },
+                           { "userId", "$_id" },
+                           { "username", 1 },
+                           { "userTweets", 1 }
+                    })
+                };
+
+            var aggregation = _usersCollection.Aggregate<UserWithTweets>(pipeline);
+            var result = await aggregation.ToListAsync();
+
+            return result;
+        }
     }
 }
 
