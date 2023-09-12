@@ -100,7 +100,7 @@ namespace TwitterMongoDb.Controllers
 
         [HttpDelete("{id:length(24)}")]
         //[Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(string id)
+        public async Task<IActionResult> Delete(string id,string tweetUsername)
         {
             var tweet = await _tweetsService.GetTweetAsync(id);
 
@@ -108,10 +108,13 @@ namespace TwitterMongoDb.Controllers
             {
                 return NotFound();
             }
+            if (tweet.tweetUsername.Equals(tweetUsername))
+            {
+                await _tweetsService.RemoveTweetAsync(id);
 
-            await _tweetsService.RemoveTweetAsync(id);
-
-            return Ok(id + " nolu tweet silindi!");
+                return Ok(id + " nolu tweet silindi!");
+            }
+        return Unauthorized("Tweet sana ait değil silenemezsin!");
         }
     }
 }

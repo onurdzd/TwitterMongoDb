@@ -65,6 +65,7 @@ namespace TwitterMongoDb.Services
                            { "_id", 0 },
                            { "userId", "$_id" },
                            { "username", 1 },
+                           { "name", 1 },
                            { "userTweets", 1 }
                     })
                 };
