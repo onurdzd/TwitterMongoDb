@@ -81,34 +81,37 @@ namespace TwitterMongoDb.Controllers
         }
 
         [HttpPut("{id:length(24)}")]
-        //[Authorize]
         public async Task<IActionResult> Update(string id, Tweet updatedTweet)
         {
             var tweet = await _tweetsService.GetTweetAsync(id);
+            var user = await _usersService.GetAsyncUsername(tweet.tweetUsername);
 
             if (tweet is null)
             {
                 return NotFound();
             }
+            if (user!=null || user?.role == "admin")
+            {
+                updatedTweet.tweetId = tweet.tweetId;
 
-            updatedTweet.tweetId = tweet.tweetId;
+                await _tweetsService.UpdateTweetAsync(id, updatedTweet);
 
-            await _tweetsService.UpdateTweetAsync(id, updatedTweet);
-
-            return NoContent();
+                return Ok(id + " nolu tweet değiştirildi!");
+            }
+            return Unauthorized("Tweet sana ait değil değiştiremezsin!");
         }
 
         [HttpDelete("{id:length(24)}")]
-        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(string id,string tweetUsername)
         {
             var tweet = await _tweetsService.GetTweetAsync(id);
+            var user=await _usersService.GetAsyncUsername(tweetUsername);
 
             if (tweet is null)
             {
                 return NotFound();
             }
-            if (tweet.tweetUsername.Equals(tweetUsername))
+            if (tweet.tweetUsername.Equals(tweetUsername) || user?.role=="admin")
             {
                 await _tweetsService.RemoveTweetAsync(id);
 
@@ -117,4 +120,5 @@ namespace TwitterMongoDb.Controllers
         return Unauthorized("Tweet sana ait değil silenemezsin!");
         }
     }
+
 }
