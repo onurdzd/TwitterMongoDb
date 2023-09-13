@@ -17,7 +17,7 @@ namespace TwitterMongoDb.Models
         [BsonElement("password")]
         public string password { get; set; }
         [BsonElement("role")]
-        public string role { get; set; }
+        public string? role { get; set; }
         [BsonElement("userCreatedAt")]
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime userCreatedAt { get; set; }

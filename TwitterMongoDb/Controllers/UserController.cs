@@ -48,8 +48,14 @@ namespace TwitterMongoDb.Controllers
         {
             var existUser=await _usersService.GetAsyncUsername(newUser.username);
             if(existUser is null) {
+                if (newUser.role?.ToLower() != "admin") {
                 await _usersService.CreateUserAsync(newUser);
                 return CreatedAtAction(nameof(Get), new { id = newUser.userId }, newUser);
+                }
+                else
+                {
+                    return Unauthorized("Admin kullanıcı yaratma yetkin yok!");
+                }
             }
             else
             {
