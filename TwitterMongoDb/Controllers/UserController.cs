@@ -102,7 +102,7 @@ namespace TwitterMongoDb.Controllers
                         // Diğer gerekli cookie seçeneklerini ayarlayın
                     });
 
-                    return Ok(new { token = tokenString,id=existUser.userId,username=existUser.username, message = "Giriş başarılı!" });
+                    return Ok(new { token = tokenString,id=existUser.userId,name=existUser.name, username=existUser.username, message = "Giriş başarılı!" });
                 }
             }
             
