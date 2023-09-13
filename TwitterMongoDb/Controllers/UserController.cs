@@ -25,7 +25,7 @@ namespace TwitterMongoDb.Controllers
 
 
         [HttpGet]
-        //[Authorize]
+        [Authorize(Roles ="admin")]
         public async Task<List<User>> Get() =>
         await _usersService.GetUsersAsync();
 
@@ -74,6 +74,7 @@ namespace TwitterMongoDb.Controllers
                         .AddUserSecrets<Program>()
                         .Build();
 
+                    //jwt üretme:
                     var secretKey = config["secretKey"]; // Özel anahtarınızı buraya ekleyin
                     var tokenExpiration = DateTime.UtcNow.AddHours(24); // Örnek olarak 1 saatlik bir süre ekleyin
                     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));

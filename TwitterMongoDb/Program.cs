@@ -36,7 +36,7 @@ var config = new ConfigurationBuilder()
                         .AddUserSecrets<Program>()
                         .Build();
 builder.Services.AddControllers();
-//authenticatior çalışmıyor
+//authenticatior postman headers a auth eklemene gerek yok authorization tab Bearer token seç token yapıştır
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        .AddJwtBearer(options =>
        {
@@ -48,7 +48,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                ValidateAudience = false,
                ValidateLifetime = true,
                ValidateIssuerSigningKey = true,
-               IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["secretKey"]))
+               IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["secretKey"])),
            };
        });
 
