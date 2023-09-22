@@ -29,7 +29,7 @@ namespace TwitterMongoDb.Controllers
                 var user = users.Find(item => item.userId == tweet.userId);
                 if (user != null)
                 {
-                    tweet.tweetUsername = user.username; // Varsayılan olarak username dizesini alın
+                    tweet.tweetUsername = user.username; // Varsayılan olarak username dizesini al
                 }
             });
             return tweets;
@@ -77,7 +77,6 @@ namespace TwitterMongoDb.Controllers
                 await _tweetsService.CreateTweetAsync(newTweet);
                 return CreatedAtAction(nameof(Get), new { id = newTweet.tweetId }, newTweet);
             }
-
         }
 
         [HttpPut("{id:length(24)}")]
